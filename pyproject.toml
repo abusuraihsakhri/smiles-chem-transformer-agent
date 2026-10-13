@@ -1,27 +1,36 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "smiles-chem-transformer-engine"
-version = "2.0.0"
-description = "SMILES-Grammar: Molecular Valence, Tautomer Enumerator & RDKit Canonicalizer"
+version = "3.1.0"
+description = "SMILES canonicalization, molecular descriptors and tautomer enumeration with compatible audit utilities"
 readme = "README.md"
 authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
-license = { text = "MIT" }
+license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Topic :: Security/Cryptography",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Chemistry",
 ]
-requires-python = ">=3.9"
-dependencies = []
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2,<3"]
+
+[project.optional-dependencies]
+api = ["fastapi>=0.110,<1", "uvicorn>=0.25,<1"]
+chem = ["rdkit>=2024.9,<2027"]
+test = ["pytest>=8,<10", "httpx>=0.27,<1"]
 
 [project.scripts]
+smiles-chem-transformer-agent = "cli:main"
 smiles-chem-transformer-engine = "smiles_transformer.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/abusuraihsakhri/smiles-chem-transformer-engine"
-Repository = "https://github.com/abusuraihsakhri/smiles-chem-transformer-engine.git"
+Homepage = "https://github.com/abusuraihsakhri/smiles-chem-transformer-agent"
+Repository = "https://github.com/abusuraihsakhri/smiles-chem-transformer-agent"
+
+[tool.setuptools]
+packages = ["agents", "smiles_transformer"]
+py-modules = ["cli", "enrichment", "simulator", "smiles_transformer_app"]
