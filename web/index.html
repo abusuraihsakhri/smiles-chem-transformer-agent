@@ -1,236 +1,199 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smiles Chem Transformer Engine — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Client-side SMILES validation, canonicalization, molecule drawing and descriptors using RDKit WebAssembly.">
+  <title>SMILES Molecular Workbench</title>
+  <style>
+    :root{color-scheme:light;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#192d3d;--muted:#526574;--line:#cfdae0;--accent:#125c75;--bg:#f5f8fa}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5}
+    header{background:#102d3e;color:#fff;padding:28px max(20px,calc((100vw - 1100px)/2))}
+    header h1{font-size:clamp(1.5rem,3vw,2.1rem);letter-spacing:-.04em;margin:0}
+    header p{margin:.4rem 0 0;color:#d3e4ec;max-width:70ch}
+    main{max-width:1100px;margin:24px auto;padding:0 20px 32px}
+    .columns{display:grid;grid-template-columns:minmax(300px,0.9fr) minmax(0,1.1fr);gap:18px;align-items:start}
+    section{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 3px 12px #163b5210}
+    h2{font-size:1.06rem;margin:0 0 14px} h3{font-size:.9rem;margin:0 0 8px}
+    p{margin:.4rem 0 1rem}.small{color:var(--muted);font-size:.88rem}
+    label{font-weight:650;display:block;margin-bottom:7px}
+    textarea{display:block;width:100%;height:108px;border-radius:7px;padding:12px;border:1px solid #8ba4b4;color:var(--ink);background:#fff;font:1rem/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}
+    button,select{font:inherit}button{border-radius:7px;border:1px solid var(--accent);padding:10px 14px;cursor:pointer;font-weight:650}
+    button.primary{background:var(--accent);color:#fff}
+    button.secondary{background:#fff;color:var(--accent)}
+    button:hover:not(:disabled){filter:brightness(.92)}button:disabled{opacity:.45;cursor:not-allowed}
+    :focus-visible{outline:3px solid #efad4d;outline-offset:3px}
+    .actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+    .examples{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px}
+    .examples button{background:#eef5f8;font-weight:500;border-color:#bed2df;padding:5px 9px;font-size:.86rem}
+    .status{min-height:44px;border-radius:7px;background:#eaf2f6;padding:10px 12px;margin:12px 0;color:#24475c}
+    .status.error{background:#fae8e5;color:#9b3029}
+    .status.success{background:#e6f6ed;color:#216745}
+    .result{display:grid;gap:14px}
+    canvas{max-width:100%;height:auto;border:1px solid #d5e0e5;border-radius:9px;background:#fff;display:block;margin:auto}
+    dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}
+    dl div{background:#f5f9fa;padding:10px;border:1px solid #e2ebef;border-radius:7px;min-width:0}
+    dt{font-size:.75rem;color:var(--muted);margin-bottom:3px}
+    dd{margin:0;font-weight:650;overflow-wrap:anywhere;font-size:.92rem}
+    .sequence{background:#f5f9fa;border:1px solid #dce6eb;border-radius:7px;padding:12px;overflow-wrap:anywhere;font:0.91rem/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap}
+    [hidden]{display:none!important}
+    footer{max-width:1100px;margin:0 auto;padding:0 20px 30px;font-size:.83rem;color:var(--muted)}
+    a{color:var(--accent)}
+    @media(max-width:800px){.columns{grid-template-columns:1fr}header{padding:24px 20px}}
+    @media(max-width:430px){section{padding:15px}dl{grid-template-columns:1fr}}
+  </style>
+  <script defer src="https://unpkg.com/@rdkit/rdkit@2026.9.1/dist/RDKit_minimal.js"></script>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Smiles Chem Transformer Engine</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
+<header>
+  <h1>SMILES Molecular Workbench</h1>
+  <p>Validate and canonicalize molecular structures, inspect 2D depictions, and calculate descriptors locally in your browser.</p>
+</header>
+<main>
+  <div class="columns">
+    <section aria-labelledby="input-title">
+      <h2 id="input-title">Molecular structure</h2>
+      <label for="smiles">SMILES notation</label>
+      <textarea id="smiles" maxlength="2048" spellcheck="false" autocomplete="off" aria-describedby="input-hint">CC(=O)Oc1ccccc1C(=O)O</textarea>
+      <p id="input-hint" class="small">Maximum 2,048 characters and 256 atoms. Includes stereochemical SMILES; invalid valence is rejected.</p>
+      <h3>Examples</h3>
+      <div class="examples" aria-label="Example structures">
+        <button type="button" data-smiles="CCO">Ethanol</button>
+        <button type="button" data-smiles="c1ccccc1">Benzene</button>
+        <button type="button" data-smiles="CC(=O)Oc1ccccc1C(=O)O">Aspirin</button>
+        <button type="button" data-smiles="F[C@H](Cl)Br">Chiral example</button>
+      </div>
+      <div class="actions">
+        <button type="button" id="analyze" class="primary" disabled>Analyze SMILES</button>
+        <button type="button" id="copy" class="secondary" disabled>Copy canonical</button>
+        <button type="button" id="export" class="secondary" disabled>Export JSON</button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite">Loading RDKit chemistry engine…</div>
+      <p class="small">Privacy: molecular inputs are processed by RDKit WebAssembly in this tab. No molecular data is sent to this application's server. The RDKit runtime is fetched from an external CDN; an internet connection is required on first load.</p>
+    </section>
+    <section aria-labelledby="results-title">
+      <h2 id="results-title">Analysis results</h2>
+      <div id="empty" class="small">Analysis will appear after the chemistry engine has loaded.</div>
+      <div id="results" class="result" hidden>
+        <div>
+          <h3>Structure</h3>
+          <canvas id="structure" width="520" height="320" role="img" aria-label="Two-dimensional molecule drawing"></canvas>
         </div>
         <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
+          <h3>Canonical isomeric SMILES</h3>
+          <div class="sequence" id="canonical"></div>
         </div>
-    </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
+        <div>
+          <h3>Computed descriptors</h3>
+          <dl id="descriptors"></dl>
         </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Smiles Chem Transformer Engine Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "smiles-chem-transformer-engine",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+        <p class="small">Canonicalization is structural normalization, not chemical identity validation against an external database. For InChI identifiers and tautomer enumeration, use the RDKit-backed Python CLI/API.</p>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>Powered by <a href="https://www.rdkit.org/" rel="noopener noreferrer">RDKit</a> (BSD-3-Clause). Scientific computations are for research use; outputs are not experimental measurements.</footer>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let RDKit = null;
+let lastAnalysis = null;
+const status = (message, kind = "") => {
+  $("status").textContent = message;
+  $("status").className = "status" + (kind ? " " + kind : "");
+};
+function resetResults() {
+  lastAnalysis = null;
+  $("results").hidden = true;
+  $("empty").hidden = false;
+  $("copy").disabled = true;
+  $("export").disabled = true;
+}
+function analyze() {
+  resetResults();
+  if (!RDKit) { status("The chemistry engine is unavailable.", "error"); return; }
+  const smiles = $("smiles").value.trim();
+  if (!smiles || smiles.length > 2048) {
+    status("Enter a SMILES string of at most 2,048 characters.", "error"); return;
+  }
+  let molecule;
+  try {
+    molecule = RDKit.get_mol(smiles);
+    if (!molecule) throw new Error("SMILES parsing or valence validation failed.");
+    const atoms = molecule.get_num_atoms();
+    if (atoms > 256) throw new Error("Molecule exceeds the 256-atom limit.");
+    const canonical = molecule.get_smiles();
+    if (!canonical) throw new Error("Could not canonicalize this SMILES string.");
+    const descriptorData = JSON.parse(molecule.get_descriptors());
+    const descriptors = {
+      "Atom count": atoms,
+      "Canonical molecular weight (Da)": Number.isFinite(descriptorData.amw) ? descriptorData.amw.toFixed(3) : "Not available",
+    };
+    molecule.draw_to_canvas($("structure"), 520, 320);
+    $("canonical").textContent = canonical;
+    const dl = $("descriptors");
+    dl.replaceChildren();
+    for (const [key, value] of Object.entries(descriptors)) {
+      const item = document.createElement("div");
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = key;
+      dd.textContent = String(value);
+      item.append(dt, dd);
+      dl.appendChild(item);
+    }
+    lastAnalysis = { input_smiles: smiles, canonical_smiles: canonical, descriptors, rdkit_version: RDKit.version() };
+    $("results").hidden = false;
+    $("empty").hidden = true;
+    $("copy").disabled = false;
+    $("export").disabled = false;
+    status("Structure validated and analyzed locally with RDKit " + RDKit.version() + ".", "success");
+  } catch (error) {
+    status("Analysis failed: " + (error && error.message ? error.message : "Invalid SMILES."), "error");
+  } finally {
+    if (molecule) molecule.delete();
+  }
+}
+window.addEventListener("load", async () => {
+  $("analyze").addEventListener("click", analyze);
+  $("smiles").addEventListener("input", resetResults);
+  for (const sample of document.querySelectorAll("[data-smiles]")) {
+    sample.addEventListener("click", () => {
+      $("smiles").value = sample.dataset.smiles;
+      if (RDKit) analyze();
+    });
+  }
+  $("copy").addEventListener("click", async () => {
+    if (!lastAnalysis) return;
+    try {
+      await navigator.clipboard.writeText(lastAnalysis.canonical_smiles);
+      status("Canonical SMILES copied.", "success");
+    } catch {
+      status("Clipboard access is unavailable; select and copy the canonical SMILES above.", "error");
+    }
+  });
+  $("export").addEventListener("click", () => {
+    if (!lastAnalysis) return;
+    const blob = new Blob([JSON.stringify(lastAnalysis, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "smiles-analysis.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  try {
+    if (typeof window.initRDKitModule !== "function") throw new Error("RDKit library could not be downloaded.");
+    RDKit = await window.initRDKitModule({
+      locateFile: (filename) => "https://unpkg.com/@rdkit/rdkit@2026.9.1/dist/" + filename
+    });
+    $("analyze").disabled = false;
+    analyze();
+  } catch (error) {
+    status("RDKit failed to load. Check your network connection and reload. " + (error?.message || ""), "error");
+  }
+});
+</script>
 </body>
 </html>
