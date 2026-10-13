@@ -17,7 +17,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 app = FastAPI(
     title="Smiles Chem Transformer Agent API",
     description="Enterprise Distributed Component Platform (AI Drug Discovery, Structural Biology & Wet-Lab Robotics)",
-    version="3.0.0-ENTERPRISE",
+    version="3.1.0",
 )
 
 
@@ -42,7 +42,7 @@ def dashboard():
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "smiles-chem-transformer-agent", "domain": "AI Drug Discovery, Structural Biology & Wet-Lab Robotics", "standard": "wwPDB / IUPAC / OpenSMILES / ISAC Standards", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "smiles-chem-transformer-agent", "domain": "AI Drug Discovery, Structural Biology & Wet-Lab Robotics", "standard": "wwPDB / IUPAC / OpenSMILES / ISAC Standards", "version": "3.1.0"}
 
 
 @app.get("/metrics")
