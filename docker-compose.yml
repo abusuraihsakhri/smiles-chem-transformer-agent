@@ -1,17 +1,10 @@
-version: '3.8'
-
 services:
   smiles-chem-transformer-engine:
     build: .
-    container_name: smiles-chem-transformer-engine
     ports:
       - "8000:8000"
     environment:
-      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:-change-me-in-production}
-      - MODEL_PROVIDER=mock
+      AUDIT_SECRET_KEY: ${AUDIT_SECRET_KEY:?Set a unique AUDIT_SECRET_KEY before starting}
+      APP_ENV: production
+      MODEL_PROVIDER: mock
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3

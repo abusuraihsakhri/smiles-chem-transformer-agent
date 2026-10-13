@@ -8,6 +8,7 @@ import json
 import time
 import hmac
 import hashlib
+import copy
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
@@ -59,6 +60,8 @@ class AuditTrail:
     def __init__(self, secret_key: Optional[str] = None):
         resolved_key = secret_key or os.getenv("AUDIT_SECRET_KEY")
         if not resolved_key:
+            if os.getenv("APP_ENV", "").lower() == "production":
+                raise RuntimeError("AUDIT_SECRET_KEY must be configured in production.")
             import warnings
             warnings.warn(
                 "AUDIT_SECRET_KEY not set. Using development-only fallback. "
@@ -67,10 +70,14 @@ class AuditTrail:
                 stacklevel=2,
             )
             resolved_key = "DEV-ONLY-CHANGE-ME-IN-PRODUCTION"
+        if os.getenv("APP_ENV", "").lower() == "production" and resolved_key in ("DEV-ONLY-CHANGE-ME-IN-PRODUCTION", "change-me-in-production", "change-me-in-production-use-secure-random-key"):
+            raise RuntimeError("A unique AUDIT_SECRET_KEY is required in production.")
         self.secret_key = resolved_key.encode("utf-8")
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
+        for field in (actor, actor_tier, event_type):
+            assert_no_phi(field)
         payload_str = json.dumps(details, sort_keys=True)
         assert_no_phi(payload_str)
         payload_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
@@ -93,14 +100,29 @@ class AuditTrail:
         return entry
 
     def verify_integrity(self) -> bool:
-        for i, entry in enumerate(self.logs):
-            prev = self.logs[i-1]["current_hash"] if i > 0 else "GENESIS_BLOCK_0000000000000000"
-            if entry["prev_hash"] != prev:
+        expected_prev = "GENESIS_BLOCK_0000000000000000"
+        for entry in self.logs:
+            try:
+                if not hmac.compare_digest(entry["prev_hash"], expected_prev):
+                    return False
+                sign_string = "|".join((
+                    entry["audit_id"], entry["timestamp"], entry["actor"],
+                    entry["actor_tier"], entry["event_type"],
+                    entry["payload_hash"], entry["prev_hash"],
+                ))
+                expected_hash = hmac.new(
+                    self.secret_key, sign_string.encode("utf-8"), hashlib.sha256
+                ).hexdigest()
+                if not hmac.compare_digest(entry["current_hash"], expected_hash):
+                    return False
+                expected_prev = expected_hash
+            except (KeyError, TypeError, ValueError):
                 return False
         return True
 
     def get_trail(self) -> List[Dict[str, Any]]:
-        return self.logs
+        return copy.deepcopy(self.logs)
+
 
 
 GLOBAL_AUDIT = AuditTrail()

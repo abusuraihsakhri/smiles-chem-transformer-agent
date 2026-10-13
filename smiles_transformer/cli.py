@@ -24,6 +24,10 @@ def main(argv=None):
     p_audit.add_argument("--critical", action="store_true")
     p_audit.add_argument("--status", default="DISCORDANT")
 
+    p_molecule = subparsers.add_parser("molecule", help="Analyze a SMILES structure with RDKit")
+    p_molecule.add_argument("smiles")
+    p_molecule.add_argument("--max-tautomers", type=int, default=20)
+
     # Chat
     p_chat = subparsers.add_parser("chat", help="System configuration query")
     p_chat.add_argument("query", nargs="+")
@@ -62,6 +66,15 @@ def main(argv=None):
             print(f"  Action:  {a['actionable_remediation']}")
         print("\n" + "=" * 80)
         return 0
+
+    if args.command == "molecule":
+        from smiles_transformer.chemistry import analyze_smiles, MoleculeInputError
+        try:
+            print(json.dumps(analyze_smiles(args.smiles, args.max_tautomers), indent=2))
+            return 0
+        except (MoleculeInputError, RuntimeError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 2
 
     if args.command == "chat":
         ans = coordinator.query_supervisory_chat(" ".join(args.query))

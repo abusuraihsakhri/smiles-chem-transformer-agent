@@ -1,230 +1,103 @@
-# Smiles Chem Transformer Agent
+# SMILES Chem Transformer Agent
 
-> **Domain:** Computational Biology & AI Drug Discovery  
-> **Reference Guidelines & Standards:** `wwPDB, IUPAC & CLSI Computational Guidelines`
+A molecular structure workbench and Python chemistry API using RDKit, with legacy threshold-based audit utilities maintained for compatibility. The chemistry features are deterministic cheminformatics calculations, **not** a trained molecular transformer model or experimentally validated predictions.
 
-<div align="center">
+## What works
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+- **Browser workbench:** validates SMILES, generates canonical isomeric SMILES, draws 2D structures, reports atom counts and molecular weight, copies canonical strings, and exports JSON. The web interface uses RDKit WebAssembly.
+- **Python chemistry:** validates SMILES and molecular valence, canonicalizes structures while retaining specified stereochemistry, calculates formula/mass/charge, reports InChI/InChIKey when available, and enumerates candidate tautomer structures.
+- **Existing audit workflows:** numeric rule-based threshold evaluation, mock supervisory chat, CSV batch processing, FastAPI, and an in-memory HMAC-signed audit log.
 
-</div>
+The legacy numeric thresholds are **application rules, not IUPAC, OpenSMILES, clinical, or laboratory reference limits**. The existing workers and mock model provider do not perform chemical inference. Tautomer enumeration does not establish solution-phase abundance, pharmacological properties, or chemical stability.
 
----
+## Browser application
 
-## 📖 What It Does
+Open `web/index.html` using a local HTTP server, or use the GitHub Pages deployment when enabled.
 
-**Smiles Chem Transformer Agent** is an advanced analytical and computational platform implementing Molecular Kekule valence, tautomer enumerator & InChI canonicalizer. It provides:
+~~~bash
+python -m http.server 8080 --directory web
+~~~
 
-- **Multi-Agent Evaluation**: Specialized workers for QC invariant checking, safety escalation, and protocol conformance
-- **Zero-PHI Outbound Guard**: AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers
-- **HMAC-SHA256 Audit Trail**: Cryptographically signed, tamper-evident logs for every evaluation
-- **FastAPI REST API**: OpenAPI 3.1 endpoints for integration with external systems
+Visit http://localhost:8080, enter a SMILES string and select **Analyze SMILES**. The workbench has no backend dependency. It requires an internet connection to download the pinned RDKit.js WebAssembly runtime from UNPKG; it does not send submitted SMILES to this repository's API. Browser-side computations are memory-only unless you export a JSON file.
 
----
+## Python installation
 
-## 🚀 Installation
+CI is configured to test Python 3.10–3.12. RDKit has binary dependencies and runs as a local Python package; GitHub Pages cannot run its server-side API.
 
-### Prerequisites
-- Python 3.10, 3.11, or 3.12
-- pip (Python package manager)
-
-### Setup
-
-```bash
-# Clone the repository
+~~~bash
 git clone https://github.com/abusuraihsakhri/smiles-chem-transformer-agent.git
 cd smiles-chem-transformer-agent
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[api,chem,test]"
+python -m pytest -q
+~~~
 
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+### Chemistry commands
 
-# Install dependencies
-pip install fastapi uvicorn pydantic pytest
+~~~bash
+smiles-chem-transformer-agent molecule 'CC(=O)Oc1ccccc1C(=O)O'
+python -m smiles_transformer.cli molecule 'OCC' --max-tautomers 5
+~~~
 
-# Configure environment
-cp .env.example .env
-# Edit .env to set a secure AUDIT_SECRET_KEY
-```
+Output includes `canonical_smiles`, formula, weights, charge, candidate `tautomers`, and optional InChI identifiers. Unparseable or over-limit SMILES return an error rather than invented results.
 
----
+### Existing audit CLI
 
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-- **Deterministic Calculation Engine**: Strict compliance with standard reference formulations and thresholds
-- **Risk & Urgency Classification**: Multi-tier categorization with automated clinical/operational action recommendations
-- **Validation & Guardrails**: Rigorous input bounds checking and anomaly detection
-- **Batch Processing**: CSV-based high-throughput task evaluation
-
----
-
-## 💻 CLI Quickstart & Usage
-
-### 1. Run Single Task Evaluation
-```bash
+~~~bash
 python cli.py audit --task-id TASK-001 --target TARGET-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
-```
-
-### 2. Interactive Chat Query
-```bash
-python cli.py chat "What is the system status?"
-```
-
-### 3. Verify Audit Trail Integrity
-```bash
-python cli.py verify-audit
-```
-
-### 4. Batch Process CSV File
-```bash
 python cli.py batch -i sample.csv -o results.csv
-```
+python cli.py verify-audit
+python cli.py chat "What is the system status?"
+~~~
 
-### 5. Launch REST API Server
-```bash
-python cli.py serve --host 127.0.0.1 --port 8000
-```
+The legacy numerical coordinator is also exposed through the `smiles-chem-transformer-engine` entry point. These commands do not analyze SMILES unless `molecule` is used.
 
-### Parameter Reference
-| Parameter | Description | Default |
-|:----------|:------------|:--------|
-| `--task-id` | Unique task identifier | `TASK-2026-001` |
-| `--target` | Target identifier | `KEY-TARGET-01` |
-| `--primary` | Primary metric value | `28.5` |
-| `--secondary` | Secondary metric value | `14.2` |
-| `--critical` | Enable critical flag | `False` |
-| `--status` | Status descriptor | `DISCORDANT` |
+### REST API
 
-### Input Data Schema (CSV)
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Unique task identifier | Required |
-| `target_identifier` | Target entity identifier | Required |
-| `primary_metric` | Primary measurement value | Required |
-| `secondary_metric` | Secondary kinetic/confidence score | Optional |
-| `is_critical_flag` | Emergency escalation trigger | Optional |
-| `status_descriptor` | Status code or phenotype | Optional |
+~~~bash
+export AUDIT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+export APP_ENV=production
+smiles-chem-transformer-agent serve --host 127.0.0.1 --port 8000
+curl -X POST http://127.0.0.1:8000/api/molecule \
+  -H 'Content-Type: application/json' \
+  -d '{"smiles":"OCC","max_tautomers":10}'
+~~~
 
----
+The server serves the workbench at `/`, OpenAPI docs at `/docs`, and its machine-readable schema at `/openapi.json`.
 
-## 🌐 REST API Endpoints
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/health` | GET | Runtime health metadata |
+| `/api/molecule` | POST | RDKit molecular analysis |
+| `/api/audit` | POST | Legacy numeric-rule audit |
+| `/api/chat` | POST | Deterministic mock supervisor response |
+| `/api/audit/logs` | GET | In-memory signed audit metadata and verification status |
+| `/metrics` | GET | Operational counters as JSON (not Prometheus text) |
 
-When the server is running (default: http://127.0.0.1:8000):
+The API is **not authenticated**. Bind to localhost for local analysis. Put it behind access controls before using it with non-public information. PHI regex filtering is best-effort and **not** a HIPAA-compliance guarantee. The audit chain is kept only in memory, cannot authenticate original payload contents without retained evidence, and resets on restart. In production, `APP_ENV=production` rejects missing/known placeholder audit secrets.
 
-| Endpoint | Method | Description |
-|:---------|:-------|:------------|
-| `/health` | GET | Health check and system metadata |
-| `/metrics` | GET | Prometheus operational metrics |
-| `/api/audit` | POST | Submit task for evaluation |
-| `/api/chat` | POST | Query supervisory chat |
-| `/api/audit/logs` | GET | Retrieve HMAC audit trail |
+### Docker
 
-### Example API Request
-```bash
-curl -X POST http://127.0.0.1:8000/api/audit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "task_id": "TASK-001",
-    "target_identifier": "TARGET-01",
-    "primary_metric": 28.5,
-    "secondary_metric": 14.2,
-    "status_descriptor": "DISCORDANT",
-    "is_critical_flag": true
-  }'
-```
+~~~bash
+export AUDIT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+docker compose up --build
+~~~
 
----
+This exposes port 8000. For an internet-facing instance, configure authentication, TLS termination, and persistent audit storage separately.
 
-## 🛡️ Security & Enterprise Architecture
+## Development and verification
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`)
+- Python tests: `python -m pytest -q`
+- Syntax: `python -m compileall -q agents smiles_transformer`
+- Browser JavaScript: checked by CI with `node --check`; RDKit.js is pinned to `2026.9.1` and loads through an external CDN.
+- GitHub Actions: runs on Python 3.10, 3.11 and 3.12, with a separate Pages deployment workflow for static `web/`.
+- Chromium/Firefox/Safari/Edge: a modern browser with WebAssembly and canvas support is required. Browser-specific compatibility has not been exhaustively certified.
 
-### Security Configuration
+## Security and data handling
 
-The `AUDIT_SECRET_KEY` environment variable **must** be set in production. Generate a secure key:
+No API key is embedded in the browser. The application does not expose private server files through Pages. Generated JSON exports stay on the user's device. Calls to the third-party CDN for RDKit.js may reveal network metadata to that CDN; avoid using the browser workbench where all network calls must be prohibited.
 
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
-```
+## License
 
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
-
-```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py --tasks 1000 --concurrency 8
-```
-
----
-
-## 🐳 Container Deployment
-
-### Docker Compose (Recommended)
-```bash
-# Set your production secret key
-export AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
-
-# Start services
-docker-compose up -d
-```
-
-### Docker Direct
-```bash
-docker build -t smiles-chem-transformer-agent .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secret-key smiles-chem-transformer-agent
-```
-
----
-
-## 📁 Project Structure
-
-```
-smiles-chem-transformer-agent/
-├── agents/                    # Core agent modules
-│   ├── api.py                 # FastAPI REST server
-│   ├── base.py                # Security guards, audit trail
-│   ├── models.py              # Pydantic data models
-│   ├── supervisor.py          # Master coordinator
-│   ├── workers.py             # Specialized domain workers
-│   ├── llm_factory.py         # LLM provider factory
-│   ├── metrics.py             # Prometheus metrics
-│   ├── learning.py            # Bayesian calibration
-│   └── streamer.py            # WebSocket telemetry
-├── smiles_transformer/        # SMILES transformer package
-│   ├── engine.py              # Core algorithmic engine
-│   ├── agents.py              # Sub-agent implementations
-│   ├── models.py              # Data models
-│   ├── server.py              # FastAPI server
-│   └── cli.py                 # CLI interface
-├── tests/                     # Test suite
-├── web/                       # Web dashboard
-├── cli.py                     # Main CLI entry point
-├── simulator.py               # High-throughput simulator
-├── pyproject.toml             # Project configuration
-├── Dockerfile                 # Container definition
-├── docker-compose.yml         # Multi-service orchestration
-└── .github/workflows/ci.yml   # CI/CD pipeline
-```
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
+MIT for this repository; RDKit and its JavaScript distribution are available under the BSD-3-Clause license. See [LICENSE](LICENSE).
