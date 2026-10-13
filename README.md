@@ -22,7 +22,7 @@ Visit http://localhost:8080, enter a SMILES string and select **Analyze SMILES**
 
 ## Python installation
 
-Python 3.10–3.12 is exercised in CI. RDKit has binary dependencies and runs as a local Python package; GitHub Pages cannot run its server-side API.
+CI is configured to test Python 3.10–3.12. RDKit has binary dependencies and runs as a local Python package; GitHub Pages cannot run its server-side API.
 
 ~~~bash
 git clone https://github.com/abusuraihsakhri/smiles-chem-transformer-agent.git
