@@ -1,43 +1,97 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Smiles Chem Transformer Engine API",
-    "description": "Enterprise Distributed Component Platform (Clinical & Cryptographic AI) adhering to CAP / CLSI / NIST Standards.",
-    "version": "3.0.0-ENTERPRISE",
-    "contact": {
-      "name": "Dr. Abu Suraih Sakhri",
-      "url": "https://github.com/abusuraihsakhri"
-    }
+    "title": "SMILES Chem Transformer Agent API",
+    "version": "3.1.0",
+    "description": "RDKit-backed molecular analysis and legacy rule-based audit. Runtime schema is available from /openapi.json."
   },
   "paths": {
-    "/health": {
+    "/": {
       "get": {
-        "summary": "Health and metadata check",
+        "summary": "Serve local browser workbench",
         "responses": {
           "200": {
-            "description": "System optimal"
+            "description": "HTML workbench"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health metadata",
+        "responses": {
+          "200": {
+            "description": "Service status"
           }
         }
       }
     },
     "/metrics": {
       "get": {
-        "summary": "Prometheus operational metrics",
+        "summary": "JSON operational counters",
         "responses": {
           "200": {
-            "description": "Prometheus text metrics"
+            "description": "Counters as JSON, not Prometheus exposition format"
+          }
+        }
+      }
+    },
+    "/api/molecule": {
+      "post": {
+        "summary": "Analyze SMILES with RDKit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "smiles"
+                ],
+                "properties": {
+                  "smiles": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "max_tautomers": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "default": 20
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Calculated canonical SMILES, formula, masses, InChI when supported and tautomers"
+          },
+          "422": {
+            "description": "SMILES validation error"
+          },
+          "503": {
+            "description": "RDKit unavailable"
           }
         }
       }
     },
     "/api/audit": {
       "post": {
-        "summary": "Dispatch task payload across specialized workers",
+        "summary": "Legacy threshold audit",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "task_id",
+                  "target_identifier",
+                  "primary_metric"
+                ],
                 "properties": {
                   "task_id": {
                     "type": "string"
@@ -49,64 +103,72 @@
                     "type": "number"
                   },
                   "secondary_metric": {
-                    "type": "number"
+                    "type": "number",
+                    "default": 0
                   },
                   "status_descriptor": {
-                    "type": "string"
+                    "type": "string",
+                    "default": "NOMINAL"
                   },
                   "is_critical_flag": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "attributes": {
+                    "type": "object"
                   }
-                },
-                "required": [
-                  "task_id",
-                  "target_identifier",
-                  "primary_metric"
-                ]
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Consensus dossier with HMAC signature"
+            "description": "Rule-based consensus dossier"
+          },
+          "422": {
+            "description": "Input validation or sensitive identifier rejection"
           }
         }
       }
     },
     "/api/chat": {
       "post": {
-        "summary": "Air-gapped supervisory conversational assistant",
+        "summary": "Deterministic mock supervisor response",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "query"
+                ],
                 "properties": {
                   "query": {
                     "type": "string"
                   }
-                },
-                "required": [
-                  "query"
-                ]
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Supervisory response"
+            "description": "Mock response"
+          },
+          "400": {
+            "description": "Invalid query"
           }
         }
       }
     },
     "/api/audit/logs": {
       "get": {
-        "summary": "Retrieve and cryptographically verify HMAC audit trail",
+        "summary": "In-memory signed audit log metadata",
         "responses": {
           "200": {
-            "description": "Cryptographic audit trail"
+            "description": "Audit trail entries and verification result"
           }
         }
       }
