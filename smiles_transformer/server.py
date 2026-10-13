@@ -11,11 +11,12 @@ coordinator = SMILESGrammarCoordinator()
 def create_app():
     try:
         from fastapi import FastAPI
-        from pydantic import BaseModel
+        from pydantic import BaseModel, Field
+        from fastapi import HTTPException
 
         app = FastAPI(
             title="SMILES-Grammar: Molecular Valence, Tautomer Enumerator & RDKit Canonicalizer",
-            description="Parses SMILES strings into molecular graphs, evaluates Kekule valence rules, generates aromatic resonance forms, and produces InChI/InChIKey hashes.",
+            description="Legacy numeric-rule audit coordinator plus RDKit-backed SMILES analysis.",
             version="2.0.0-FRONTIER",
         )
 
@@ -26,7 +27,11 @@ def create_app():
             secondary_metric: float = 14.2
             status_descriptor: str = "DISCORDANT_ANOMALY"
             is_critical_flag: bool = True
-            attributes: Dict[str, Any] = {}
+            attributes: Dict[str, Any] = Field(default_factory=dict)
+
+        class MoleculeRequest(BaseModel):
+            smiles: str = Field(min_length=1, max_length=2048)
+            max_tautomers: int = Field(default=20, ge=1, le=50)
 
         class ChatRequest(BaseModel):
             query: str
@@ -51,6 +56,16 @@ def create_app():
         @app.post("/api/chat")
         def api_chat(req: ChatRequest):
             return {"response": coordinator.query_supervisory_chat(req.query)}
+
+        @app.post("/api/molecule")
+        def api_molecule(req: MoleculeRequest):
+            from .chemistry import analyze_smiles, MoleculeInputError
+            try:
+                return analyze_smiles(req.smiles, req.max_tautomers)
+            except MoleculeInputError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail="Molecule analysis is unavailable.") from exc
 
         return app
     except ImportError:
